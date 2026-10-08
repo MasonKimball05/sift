@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sift</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- The sidebar. The empty strip at the top is where the window's traffic
+       lights sit; data-tauri-drag-region lets you drag the window by it. -->
+  <nav class="sidebar">
+    <div class="titlebar" data-tauri-drag-region></div>
+    <div class="brand" data-tauri-drag-region>
+      <img src="icon.png" alt="" width="28" height="28">
+      <span>sift</span>
+    </div>
+    <ul class="nav">
+      <li><button data-view="review" class="active">Review <span class="badge" id="waiting-count" hidden></span></button></li>
+      <li><button data-view="activity">Activity</button></li>
+      <li><button data-view="folders">Where Files Go</button></li>
+      <li><button data-view="rules">Rules File</button></li>
+      <li><button data-view="test">Test a File</button></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div class="field-label">When a rule matches</div>
+      <div class="segmented" role="radiogroup" aria-label="Mode">
+        <button data-mode="suggest" role="radio">Ask me</button>
+        <button data-mode="move" role="radio">Just move it</button>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="watching">
+        <span class="track"><span class="thumb"></span></span>
+        <span>Watch in the background</span>
+      </label>
+      <p class="hint" id="watch-hint">Sorts new downloads as they arrive, from login on.</p>
+    </div>
+  </nav>
+
+  <main>
+    <div class="titlebar" data-tauri-drag-region></div>
+    <div class="banner error" id="config-error" hidden></div>
+
+    <!-- Review: files a rule matched, waiting for your OK. -->
+    <section id="review" class="view">
+      <header class="view-head">
+        <div>
+          <h1>Review</h1>
+          <p class="sub" id="review-sub">Files sift wants to move, waiting for your OK.</p>
+        </div>
+        <button class="btn" id="scan">Scan Now</button>
+      </header>
+      <div id="groups"></div>
+      <div class="empty" id="review-empty" hidden>
+        <div class="empty-mark">&#10003;</div>
+        <h2>Nothing waiting</h2>
+        <p>New files that match a rule show up here. Scan Now looks over Downloads and Desktop.</p>
+      </div>
+    </section>
+
+    <!-- Activity: what's been moved, with undo. -->
+    <section id="activity" class="view" hidden>
+      <header class="view-head">
+        <div>
+          <h1>Activity</h1>
+          <p class="sub">Everything sift has moved. Undo puts a file back where it was.</p>
+        </div>
+      </header>
+      <ol class="moves" id="moves"></ol>
+      <div class="empty" id="activity-empty" hidden>
+        <h2>Nothing moved yet</h2>
+        <p>Moves show up here as you approve them.</p>
+      </div>
+    </section>
+
+    <!-- Where files go: each rule's folder, rules on and off, adding rules. -->
+    <section id="folders" class="view" hidden>
+      <header class="view-head">
+        <div>
+          <h1>Where Files Go</h1>
+          <p class="sub">Each rule sends its files to its folder. Rules are tried top to bottom; the first match wins.</p>
+        </div>
+        <button class="btn primary" id="add-rule">Add a Rule</button>
+      </header>
+      <form class="card new-rule" id="new-rule" hidden>
+        <h2>New rule</h2>
+        <label class="field">Name <input name="name" placeholder="Pictures" required></label>
+        <div class="field">Files
+          <div class="chips" id="kind-chips"></div>
+        </div>
+        <label class="field">From
+          <select name="from">
+            <option value="">Downloads or Desktop</option>
+            <option value="~/Downloads">Downloads</option>
+            <option value="~/Desktop">Desktop</option>
+          </select>
+        </label>
+        <div class="field">Folder
+          <div class="pick">
+            <code id="new-folder" class="path-box">Choose a folder</code>
+            <button type="button" class="btn small" id="new-folder-pick">Choose&hellip;</button>
+          </div>
+        </div>
+        <label class="field">Subfolders
+          <select name="subfolders">
+            <option value="">None</option>
+            <option value="{year}">By year</option>
+            <option value="{year}-{month}">By month</option>
+            <option value="{course}">By course</option>
+          </select>
+        </label>
+        <p class="form-error" id="new-rule-error" hidden></p>
+        <div class="actions end">
+          <button type="button" class="btn quiet" id="cancel-rule">Cancel</button>
+          <button type="submit" class="btn primary">Add Rule</button>
+        </div>
+      </form>
+      <ol class="rule-cards" id="rule-cards"></ol>
+    </section>
+
+    <!-- Rules: the rules file, edited in place and checked before saving. -->
+    <section id="rules" class="view" hidden>
+      <header class="view-head">
+        <div>
+          <h1>Rules File</h1>
+          <p class="sub">Tried top to bottom; the first match wins. <span id="rules-path"></span></p>
+        </div>
+        <div class="actions">
+          <button class="btn quiet" id="open-rules">Open in Editor</button>
+          <button class="btn quiet" id="revert-rules" disabled>Revert</button>
+          <button class="btn primary" id="save-rules" disabled>Save</button>
+        </div>
+      </header>
+      <div class="banner error" id="rules-error" hidden></div>
+      <textarea id="rules-text" spellcheck="false" autocomplete="off" aria-label="Rules file"></textarea>
+    </section>
+
+    <!-- Test a file: why each rule does or doesn't match it. -->
+    <section id="test" class="view" hidden>
+      <header class="view-head">
+        <div>
+          <h1>Test a File</h1>
+          <p class="sub">See what sift knows about a file and what each rule makes of it. Nothing moves.</p>
+        </div>
+        <button class="btn" id="choose">Choose a File&hellip;</button>
+      </header>
+      <div class="drop" id="drop">
+        <div class="drop-mark">&#8615;</div>
+        <p>Drop a file here</p>
+      </div>
+      <div id="explanation"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[package]
+name = "sift-app"
+version = "0.1.0"
+edition = "2024"
+description = "The sift app: review, undo, rules and file testing in a window"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+anyhow = "1.0.104"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+# The sorting itself: the same library the command line uses.
+sift = { path = "../.." }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"

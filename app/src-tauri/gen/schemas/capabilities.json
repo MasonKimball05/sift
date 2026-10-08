@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"What the page in the main window may call: Tauri's basics, and the file picker for Test a File.","local":true,"windows":["main"],"permissions":["core:default","dialog:allow-open"]}}

@@ -1,0 +1,83 @@
+# sift's rules: what it watches, and where each kind of file goes.
+#
+# Rules are tried from top to bottom, and the first one that matches wins.
+# Every condition a rule sets has to hold; leave out what you don't need.
+#
+# Conditions:   folders, extensions, name_matches (a regex), from_hosts (the site
+#               it was downloaded from), text_any (words inside PDFs and text
+#               files), unused_days
+# Actions:      to (a folder), rename (without the extension), tags, trash
+# In `to` and `rename`: {name} {date} {year} {month} {course}
+#   {course} is a course code found in the file ("COSC 490"), or "Other".
+#
+# Try a file with:   sift explain ~/Downloads/thing.pdf
+# See what would happen without moving anything:   sift run --dry-run
+
+# "suggest": sift lines moves up and you approve them with `sift review`.
+# Once you trust it, change this to "move".
+mode = "suggest"
+
+watch = ["~/Downloads", "~/Desktop"]
+
+# Seconds a file has to sit unchanged before it's sorted.
+settle_seconds = 5
+
+# Course codes to recognize, like ["COSC", "MATH"]. Empty: any 3 or 4 capital
+# letters and 3 digits ("COSC 490", "MATH260").
+course_codes = []
+
+# Canvas course numbers and names, written by Daybook from the Canvas feed, so
+# a Canvas download finds its course from its link:
+# canvas_courses = "~/Library/Application Support/Daybook/canvas-courses.json"
+
+# Courses Daybook doesn't know (past semesters), by Canvas course number.
+# `sift explain` on a Canvas download shows its number.
+[course_names]
+# "52266" = "COSC 360"
+
+[[rule]]
+name = "Screenshots"
+name_matches = "^Screen ?[Ss]hot "
+to = "~/Pictures/Screenshots/{year}-{month}"
+
+[[rule]]
+name = "Installers"
+folders = ["~/Downloads"]
+extensions = ["dmg", "pkg"]
+to = "~/Downloads/To Install"
+
+[[rule]]
+name = "Canvas downloads"
+from_hosts = ["instructure.com"]
+to = "~/Documents/School/{course}"
+tags = ["School"]
+
+[[rule]]
+name = "Syllabi and coursework"
+extensions = ["pdf", "docx"]
+text_any = ["syllabus", "course schedule", "learning outcomes", "office hours"]
+to = "~/Documents/School/{course}"
+tags = ["School"]
+
+[[rule]]
+name = "Receipts"
+extensions = ["pdf"]
+text_any = ["receipt", "order total", "amount paid", "payment received", "invoice"]
+to = "~/Documents/Finance/{year}"
+rename = "{date} {name}"
+tags = ["Finance"]
+
+[[rule]]
+name = "Job search"
+extensions = ["pdf", "docx"]
+text_any = ["offer letter", "offer of employment", "job offer", "internship offer", "employment agreement"]
+to = "~/Documents/Jobs"
+tags = ["Jobs"]
+
+# Last: downloads you haven't opened in a month go to the Trash
+# (where Finder's Put Back still works).
+[[rule]]
+name = "Old downloads"
+folders = ["~/Downloads"]
+unused_days = 30
+trash = true
